@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="de"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>WortKompass V0.13 – Täglich ein Wort entdecken</title><meta name="theme-color" content="#f3f0ea"><meta name="description" content="WortKompass: deutsches Worträtsel mit 5 oder 6 Buchstaben, Tagesrätsel, freiem Spiel und lokalen Statistiken.">
+<style>
+:root{
+  font-family:system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+  color-scheme:light;
+  --bg:#f3efe7;
+  --bg-soft:#eef3f6;
+  --panel:#fffdf9;
+  --panel-2:#f8f5ee;
+  --edge:#d8ddd9;
+  --edge-strong:#c4cbc8;
+  --fg:#24323b;
+  --sub:#6b7880;
+  --green:#6c9275;
+  --yellow:#c4a15b;
+  --miss:#c8ced5;
+  --miss-text:#6b7680;
+  --accent:#5f7e96;
+  --accent-soft:#e3edf4;
+  --shadow:0 12px 30px rgba(44,58,68,.10);
+  --shadow-soft:0 6px 14px rgba(44,58,68,.07);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  min-height:100vh;
+  overflow-x:hidden;
+  color:var(--fg);
+  background:
+    radial-gradient(circle at top right, rgba(214,228,237,.75), transparent 30%),
+    radial-gradient(circle at top left, rgba(237,231,217,.85), transparent 28%),
+    linear-gradient(180deg,var(--bg-soft) 0%, var(--bg) 100%);
+}
+button,select,textarea,input{font:inherit}
+button{cursor:pointer;transition:transform .08s ease, box-shadow .15s ease, background-color .15s ease, border-color .15s ease}
+button:hover{transform:translateY(-1px);box-shadow:var(--shadow-soft)}
+button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid rgba(95,126,150,.28);outline-offset:2px}
+main{width:100%;max-width:980px;margin:auto;padding:24px 16px 42px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+.brand{font-size:29px;font-weight:800;letter-spacing:-.7px;color:var(--fg)}
+.brand span{color:var(--accent)}
+.muted{color:var(--sub);font-size:13px}
+.controls{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0 14px}
+.controls label{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--sub)}
+select,button,input,textarea{
+  border:1px solid var(--edge);
+  background:var(--panel);
+  color:var(--fg);
+  padding:10px 12px;
+  border-radius:12px;
+  box-shadow:0 1px 0 rgba(255,255,255,.7) inset;
+}
+button,select{min-height:44px;touch-action:manipulation}
+input,select{font-size:16px}
+.primary{
+  background:var(--accent);
+  border-color:var(--accent);
+  color:#fff;
+  font-weight:700;
+  box-shadow:0 8px 16px rgba(95,126,150,.22);
+}
+.primary:hover{background:#547189}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:18px;align-items:start}
+.panel{
+  background:linear-gradient(180deg,rgba(255,253,249,.97),rgba(250,247,241,.97));
+  border:1px solid rgba(216,221,217,.95);
+  border-radius:22px;
+  padding:20px;
+  box-shadow:var(--shadow);
+  backdrop-filter:blur(2px);
+}
+.status{text-align:center;line-height:1.45;padding:6px 0 10px;min-height:50px;color:#526069;font-size:14px}
+.board{display:grid;gap:6px;width:min(100%,372px);margin:4px auto 20px}
+.board .line{display:grid;gap:6px}
+.tile{
+  aspect-ratio:1;
+  display:grid;
+  place-items:center;
+  border:2px solid var(--edge-strong);
+  border-radius:12px;
+  font-size:clamp(20px,5.9vw,29px);
+  font-weight:790;
+  user-select:none;
+  background:linear-gradient(180deg,#fffdfa,#f7f3eb);
+  color:var(--fg);
+  box-shadow:0 2px 0 rgba(255,255,255,.6) inset;
+}
+.tile.filled{border-color:#9eacb2;background:#fff}
+.tile.green,.key.green{background:var(--green)!important;border-color:var(--green)!important;color:#fff}
+.tile.yellow,.key.yellow{background:var(--yellow)!important;border-color:var(--yellow)!important;color:#fff}
+.tile.gray{background:var(--miss)!important;border-color:var(--miss)!important;color:#fff}
+.keyboard{display:flex;flex-direction:column;gap:7px;width:100%;max-width:480px;margin:0 auto}
+.keyrow{display:flex;justify-content:center;gap:4px;width:100%}
+.key{
+  min-width:0;
+  flex:1;
+  max-width:none;
+  height:clamp(43px,6.1vw,53px);
+  padding:0;
+  border:1px solid #cfd5d4;
+  border-radius:10px;
+  background:linear-gradient(180deg,#fefcf8,#eeede8);
+  color:var(--fg);
+  font-weight:760;
+  font-size:clamp(11px,2.6vw,16px);
+}
+.key.special{max-width:none;flex:1.7;font-size:clamp(10px,2.2vw,13px)}
+/* Ausgeschlossene Tasten deutlich kennzeichnen */
+.key.gray,.key.gray:hover{
+  background:linear-gradient(180deg,#ece9e3,#e0e3e7)!important;
+  border:1px solid #c2c8cf!important;
+  color:var(--miss-text)!important;
+  opacity:1;
+  text-decoration:line-through;
+  text-decoration-thickness:2px;
+  text-decoration-color:#7c8791;
+  box-shadow:none;
+  filter:none;
+}
+.miniheading{font-size:15px;font-weight:700;margin:0 0 12px;color:var(--fg)}
+.metric{display:flex;justify-content:space-between;border-bottom:1px solid #e5e8e5;padding:9px 0;font-size:14px}
+.metric strong{font-size:18px}
+.distribution{margin-top:18px}
+.barrow{display:flex;align-items:center;gap:8px;margin:7px 0;font-size:13px;color:var(--sub)}
+.bar{height:20px;background:linear-gradient(90deg,#89a3b8,#6e899e);color:#fff;border-radius:999px;min-width:3px;text-align:right;padding-right:8px;font-size:12px;line-height:20px}
+.help{font-size:13px;line-height:1.62;color:var(--sub)}
+.legend{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+.legend b{padding:3px 6px;border-radius:6px;color:#fff}
+.legend .g{background:var(--green)}
+.legend .y{background:var(--yellow)}
+.legend .x{background:#97a2ad}
+details{margin-top:20px;border-top:1px solid #e3e7e4;padding-top:14px}
+summary{cursor:pointer;font-weight:700;color:var(--fg)}
+textarea{width:100%;background:#fffefb;border-radius:14px;padding:10px;min-height:105px;resize:vertical;font-size:13px}
+small{color:var(--sub)}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.note{font-size:12px;line-height:1.55;color:var(--sub);margin:10px 0 0}
+.footer{margin-top:20px;text-align:center;font-size:12px;color:var(--sub)}
+@media(max-width:720px){
+  main{padding:12px 10px 34px;max-width:640px}
+  .brand{font-size:24px}
+  .top{gap:8px}
+  .panel{padding:14px 10px;border-radius:18px}
+  .controls{gap:8px;margin:12px 0}
+  .controls label{flex:1 1 auto;display:flex;flex-direction:column;align-items:stretch;gap:4px}
+  .controls label select{width:100%}
+  .layout{grid-template-columns:1fr;gap:13px}
+  .side{order:2}
+  .board{width:min(100%,332px)}
+}
+@media(max-width:390px){
+  main{padding:8px 5px 28px}
+  .brand{font-size:22px}
+  .panel{padding:10px 6px;border-radius:16px}
+  .board{width:min(100%,305px);gap:4px}
+  .board .line{gap:4px}
+  .keyrow{gap:2px}
+  .key{height:46px;font-size:11px;border-radius:8px}
+  .controls button{padding:8px 9px;font-size:13px}
+  .tile{border-width:1.5px;border-radius:10px}
+}
+@media(min-width:721px) and (max-width:1024px){
+  main{max-width:860px}
+  .layout{grid-template-columns:minmax(0,1fr) 255px;gap:14px}
+  .panel{padding:16px}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+
+/* Version 0.11 · Designabgleich mit „Mein Lebensarchiv V2“ */
+:root{
+  --bg:#f3f0ea;--bg-soft:#f3f0ea;--panel:#fffefa;--panel-2:#f8f5f0;
+  --edge:#e1ddd4;--edge-strong:#d3d0c8;
+  --fg:#25384e;--sub:#7b8084;--accent:#243850;--accent-soft:#e7edf2;
+  --yellow:#c4a05e;--green:#66846e;--miss:#b5bbc0;--miss-text:#70777d;
+  --shadow:0 5px 22px rgba(45,51,55,.045);--shadow-soft:0 3px 10px rgba(42,49,53,.07);
+}
+body{background:#f3f0ea;color:var(--fg)}
+main{max-width:1050px;padding-top:0}
+.top{margin:0 -16px 0;padding:17px 20px;min-height:83px;border-bottom:1px solid #e2ddd5;background:#f4f1eb}
+.brand{color:#25384e;font-size:27px;letter-spacing:-.65px}
+.brand span{color:#25384e}
+.top .muted{font-size:12px;color:#8d8e8c;margin-top:3px}
+.controls{background:transparent;gap:9px;margin:15px 0 13px}
+.controls label{font-weight:650;color:#6d7175;font-size:12px}
+select,button,input,textarea{border-color:#dedbd4;border-radius:12px;background:#fffdfa;box-shadow:none;color:#25384e}
+button:hover{box-shadow:0 4px 12px rgba(37,56,78,.08)}
+.primary{background:#243850!important;border-color:#243850!important;color:#fff!important;box-shadow:none}
+.primary:hover{background:#314c69!important}
+.panel{border:1px solid #e1ddd3;background:#fffdfa;border-radius:22px;box-shadow:0 5px 20px rgba(40,49,52,.045)}
+.status{font-weight:600;color:#697680}
+.tile{background:#f8f6f1;border:2px solid #d8d7d1;border-radius:11px;box-shadow:none;color:#25384e}
+.tile.filled{background:#fffefa;border-color:#aeb9c2}
+.key{background:#f8f6f1;border-color:#dedcd6;color:#25384e;box-shadow:none;border-radius:10px}
+.key.gray,.key.gray:hover{background:#e2e2df!important;color:#81868a!important;border-color:#caccc9!important;box-shadow:none!important}
+.miniheading{font-weight:750;color:#243850}
+.metric{border-color:#ebe8e2}.metric strong{color:#243850}
+.bar{background:#314e67}
+details{border-color:#e2ded7}
+.footer{color:#898a88}
+/* Oberhalb des Spielbretts und Statistik eine sehr dezente Markenkennung. */
+.layout>.panel{position:relative}
+.layout>.panel:before{content:'WORTRÄTSEL';display:block;font-size:11px;letter-spacing:.16em;font-weight:800;color:#a08451;margin:0 0 8px}
+.side .panel:before{content:'PERSÖNLICHE AUSWERTUNG';display:block;font-size:10px;letter-spacing:.14em;font-weight:800;color:#a08451;margin-bottom:15px}
+@media(max-width:720px){
+  main{padding-top:0}
+  .top{margin:0 -10px;padding:13px 15px;min-height:71px}
+  .panel{border-radius:20px}
+  .controls{gap:8px}
+}
+@media(max-width:390px){.top{margin:0 -5px}.top .brand{font-size:22px}.panel{border-radius:17px}}
+</style></head><body><main><div class="top"><div><div class="brand">Wort<span>Kompass</span></div><div class="muted">Das deutsche Worträtsel · ohne Anmeldung</div></div><button id="infoButton">Spielregeln</button></div>
+<div class="controls"><label>Buchstaben <select id="length"><option value="5">5 Buchstaben</option><option value="6">6 Buchstaben</option></select></label><label id="difficultyWrap" style="display:none">Schwierigkeit <select id="difficulty"><option value="leicht">Leicht · 7 Versuche</option><option value="mittel">Mittel · 6 Versuche</option></select></label><label>Spielmodus <select id="mode"><option value="daily">Tagesrätsel</option><option value="free">Freies Spiel</option></select></label><button class="primary" id="newGame">Neues Spiel</button><button id="share">Ergebnis teilen</button><button id="shareLink">Spiel-Link teilen</button></div>
+<div class="controls"><label for="playerName">Spielername (freiwillig)</label><input id="playerName" maxlength="24" placeholder="Ihr Spitzname" autocomplete="nickname"><button id="saveProfile">Speichern</button><span class="muted" id="profileStatus" aria-live="polite"></span></div><div class="layout"><section class="panel"><div id="status" class="status" aria-live="polite">Erraten Sie das gesuchte Wort.</div><div id="board" class="board" aria-label="Spielbrett"></div><div class="keyboard" id="keyboard"></div></section><aside class="side"><section class="panel"><div class="miniheading">Ihre Statistik <span id="statLength" class="muted">· 5 Buchstaben</span></div><div class="metric"><span>Gespielt</span><strong id="played">0</strong></div><div class="metric"><span>Gewonnen</span><strong id="wins">0</strong></div><div class="metric"><span>Gewinnquote</span><strong id="rate">0 %</strong></div><div class="metric"><span>Ø Versuche bei Gewinn</span><strong id="average">–</strong></div><div class="metric"><span>Aktuelle Serie</span><strong id="streak">0</strong></div><div class="metric"><span>Beste Serie</span><strong id="best">0</strong></div><div class="distribution"><div class="miniheading">Gewonnene Spiele nach Versuchen</div><div id="bars"></div></div><div class="actions"><button id="exportStats">Statistik exportieren</button><button id="resetStats">Zurücksetzen</button></div></section></aside></div>
+<details id="help"><summary>Spielregeln und Wortlisten</summary><p class="help">Erraten Sie das gesuchte deutsche Wort: bei 5 Buchstaben mit 6 Versuchen, bei 6 Buchstaben wahlweise Leicht (7) oder Mittel (6) Versuche. <strong>Grün</strong> bedeutet richtiger Buchstabe am richtigen Platz, <strong>Gelb</strong> richtiger Buchstabe am anderen Platz und <strong>Grau</strong> kein weiterer Treffer dieses Buchstabens. Doppelte Buchstaben werden korrekt berücksichtigt.</p><div class="legend"><span><b class="g">G</b> richtige Position</span><span><b class="y">E</b> falsche Position</span><span><b class="x">R</b> nicht enthalten</span></div><p class="help">Ä, Ö, Ü und ß zählen jeweils als ein Buchstabe. Die Taste ẞ steht für das deutsche ß; ß und SS sind unterschiedliche Eingaben. Tagesrätsel: pro Länge und Kalendertag dieselbe Lösung; bei 6 Buchstaben sind Leicht und Mittel getrennt spielbar. Freies Spiel: beliebig viele Runden. Ergebnisse und Wörter bleiben im Browser auf diesem Gerät gespeichert.</p><h3>Eigene Wortlisten ergänzen</h3><p class="help">Pro Zeile oder durch Komma getrennt ein deutsches Wort eingeben. Für <strong>Lösungen</strong> bitte nur allgemein bekannte Grundformen wählen. Eigene Ergänzungen sind ungeprüft und gelten nicht für Tagesrätsel. Die Eingabeliste kann auch gebeugte Wörter enthalten. Importierte Wörter werden dauerhaft lokal gespeichert.</p><label for="wordKind" class="muted">Eigene Wörter hinzufügen (ungeprüft) als</label> <select id="wordKind"><option value="answers">Lösungswörter (auch als Eingabe gültig)</option><option value="guesses">Nur zulässige Ratewörter</option></select><textarea id="wordInput" placeholder="APFEL&#10;BLUME&#10;LAMPE&#10;..."></textarea><div class="actions"><button id="importWords" class="primary">Wörter importieren</button><button id="exportWords">Gesamte Wortliste als CSV exportieren</button></div><p id="importStatus" class="note"></p><p class="note">Der Spielername und die Statistiken werden nur im jeweiligen Browser gespeichert. Teilen Sie nach der Veröffentlichung den Internetlink. Freunde erhalten keine persönlichen Daten von Ihnen. Jeder Browser führt seine eigene Statistik. Beachten Sie: Wenn Browserdaten gelöscht werden, geht die lokale Statistik verloren. Die vorinstallierte Wortliste ist eine vorläufige redaktionelle Auswahl, keine vollständige oder extern zertifizierte Wörterbuchprüfung. Fantasiewörter werden zurückgewiesen und kosten keinen Versuch. Auch echte, noch nicht enthaltene Wörter werden derzeit abgewiesen. Eigene Ergänzungen werden nur auf Ihrem Gerät gespeichert und sind nicht automatisch lexikalisch geprüft.</p></details><p class="footer">WortKompass · Version 0.9 · ohne Anmeldung · Profil und Statistik nur auf diesem Gerät</p>
+<script>
+'use strict';
+
+
+// Explicitly chosen, familiar solutions; any inaccurate tokens in raw drafts are filtered by these allowlists.
+const SOL5=`ABART ABBAU ABEND ABGAS ABORT ABRUF ABWEG ABZUG ACHSE ACKER ADERN ADIEU ADLER ADLIG ADOPT AEROB AFFEN AGAVE AGENT AHNEN AHORN AKTEN AKTIE ALARM ALBEN ALBUM ALGEN ALIAS ALIBI ALIEN ALLEE ALLES ALPEN ALTAR ALTES AMIGO AMMEN AMPEL AMSEL AMTEN AMTET ANBAU ANGEL ANGST ANIMA ANKER ANMUT ANODE ANRUF ANTIK ANZUG APART APFEL APRIL ARCHE ARENA ARGON ARIEN ARMEE ARMUT ARTEN ASCHE ASSET ATLAS ATOME AUDIO AUTOR AUTOS AUßEN AUẞEN AVISO BACKE BANDE BANGE BANJO BARDE BARON BASAR BASIS BASTA BATIK BAUCH BAUER BEBEN BEERE BEGIB BEIDE BEIGE BEILE BEINE BEIZE BELAG BERGE BERUF BESEN BETEN BETON BETTE BEUGT BEUTE BEZUG BIBEL BIBER BIEGE BIENE BIEST BINDE BINGO BIRKE BIRNE BITTE BLASE BLATT BLAUE BLECH BLEIB BLICK BLIEB BLIND BLITZ BLOCK BLOND BLUFF BLUME BLUSE BLÄST BLÖDE BLÜHT BLÜTE BODEN BOGEN BOHNE BOMBE BONUS BOOTE BORKE BOTEN BOXER BRACH BRAND BRAUN BRAUT BRAVO BRECH BRETT BRIEF BRISE BRUCH BRUST BRÜHE BUBEN BUCHE BUCHS BUCHT BULLE BUNTE BUSCH BÄLLE BÄNDE BÄNKE BÄREN BÄSSE BÄUME BÖGEN BÖRSE BÜGEL BÜHNE BÜRDE BÜSTE CHAOS CHILI CHIPS CHORE CHORS CIRCA CLOWN COACH CODES COMIC COUCH CREDO CREME DAMEN DAMIT DAMPF DANKE DANKT DARAN DARIN DARUM DATEI DATEN DATUM DAUER DEBÜT DECKE DEGEN DEHNT DEICH DELLE DELTA DEMUT DENEN DENKT DEPOT DERBE DEUTE DICHT DICKE DIEBE DIELE DIENT DIESE DINGE DIODE DISCO DOCHT DOHLE DOLCH DORNE DOSEN DRAHT DRAMA DRANG DRECK DREHT DREIE DRIFT DRILL DROGE DRUCK DRÜSE DUCKT DUELL DUNST DURST DÖNER DÖRRE DÜFTE DÜNEN EBBEN EBENE ECHSE EHRTE EICHE EIFER EIGEN EILEN EILIG EIMER EINER EINIG EISEN EISIG EITEL EITLE EKLAT ELBEN ELEND ELFER ELITE ELTER EMAIL EMPOR ENDET ENGEL ENGEN ENGER ENKEL ENORM ENTEN ENZYM ERBEN ERBSE ERDEN ERGAB ERGIB ERKER ERLÖS ERNST ERNTE ERSTE ESSEN ETAGE ETHIK EULEN EWIGE EXAKT EXTRA FABEL FADEN FAHNE FAHRT FAKIR FALKE FALLE FALLS FALTE FANGO FARBE FARCE FARNE FASER FASSE FAULE FAUNA FAUST FAZIT FEDER FEGEN FEHDE FEHLT FEIER FEIGE FEILE FEIND FEINE FELGE FELLE FERNE FERSE FESTE FETTE FEUER FIBEL FIESE FIGUR FILME FILZE FINAL FINTE FIRMA FISCH FJORD FLACH FLAIR FLAUM FLECK FLEHT FLEIẞ FLIEH FLIEẞ FLINK FLIRT FLORA FLOSS FLUCH FLUSS FLÖTE FOKUS FOLGE FONDS FORME FORST FORUM FOTOS FRACK FRAGE FRECH FREIE FREMD FRIST FROHE FRONT FROST FRÜHE FUCHS FUGEN FUNKE FÄDEN FÄHIG FÄHRE FÄLLE FÖHNE FÖHRE FÜHLE FÜLLE FÜNFE FÜRST GABEL GABEN GAGAT GANGE GARBE GAREN GASSE GATTE GEBEN GEBET GECKO GEGEN GEHEN GEIER GEIGE GEIST GELBE GELEN GELTE GENAU GENIE GENUG GERNE GERTE GERÄT GESTE GIBST GILDE GIPSE GLANZ GLATT GLAUB GLEIS GLIED GLÜCK GLÜHT GNADE GNOME GOUDA GRAMM GRAUS GREIF GRIFF GRILL GRIMM GRINS GRIPS GROBE GROẞE GRUBE GRUFT GRUND GRÄBT GRÖẞE GRÜNE GRÜßE GRÜẞE GUMMI GUNST GURKE GURTE GUTER GÄNGE GÄNSE GÄREN GÄSTE GÖNNE GÖNNT GÜTER HAARE HABEN HAFEN HAFER HAGEL HAKEN HALBE HALLE HALME HALTE HANDY HARFE HARKE HARTE HASEN HAUBE HAUCH HAUEN HAUPT HAUST HEBEL HEBEN HECKE HEFTE HEGEN HEIDE HEILE HEILT HEIZT HEIßT HEIẞE HELFT HELLE HELME HEMDE HERAB HERAN HERBE HERDE HEROS HERUM HERZE HETZE HEUTE HEXEN HIEBE HILFE HINAB HINZU HIRSE HITZE HOBBY HOBEL HOCKE HOHEN HOLEN HONIG HORDE HORST HOSEN HOTEL HUMOR HUNDE HURRA HÄFEN HÄNDE HÖHEN HÖHER HÖHLE HÖLLE HÖREN HÖRTE HÜFTE HÜGEL HÜLLE HÜTEN HÜTTE IDEAL IDEEN IDIOM IDIOT IMAGO IMKER IMMER IMPFT INDEM INDEX INFOS INNEN INNIG INSEL IONEN IRREN JACHT JACKE JAGEN JAGTE JAHRE JEANS JEDER JENES JETZT JODEL JOGGT JOKER JOLLE JUBEL JUNGE JURTE JÄGER KABEL KADER KAFFE KAHLE KAJAK KAKAO KALTE KAMEL KAMIN KAMPF KANAL KANNE KANTE KAPPE KARTE KASSE KATER KATZE KAUEN KAUFT KEBAB KEGEL KEHLE KEIME KEINS KEKSE KELLE KERBE KERLE KERNE KERZE KETTE KIEPE KIESE KILOS KIOSK KIPPE KISTE KITZE KLAGE KLANG KLAPS KLAUE KLEID KLEIE KLEIN KLICK KLIMA KLOTZ KLUFT KLUGE KNABE KNALL KNAPP KNAST KNAUF KNETE KNICK KNIPS KNOPF KOBRA KODEX KOHLE KOKON KOMBI KOMET KOMMA KONTO KOPIE KORPS KRACH KRAFT KRANK KRANZ KRAUT KREBS KREIS KREUZ KRIEG KRISE KRONE KRÄNE KRÖTE KRÜGE KUBUS KUGEL KUNDE KUNST KURSE KURVE KURZE KÄFER KÄLTE KÖCHE KÖDER KÖNIG KÖPFE KÖRBE KÜBEL KÜCHE KÜHLE KÜRZE KÜSTE LABOR LACHE LACHS LACKE LADEN LADET LAGER LAIEN LAKAI LAMPE LANGE LANZE LAPPE LARVE LASER LASSO LATTE LAUBE LAUCH LAUGE LAUNE LAUTE LEBEN LEBER LEDER LEERE LEHNE LEHRE LEIDE LEIER LEIHE LEIME LEINE LEISE LEITE LESEN LESER LETZT LEUTE LICHT LIEBE LIEGE LIEST LILIE LINDE LINIE LINKE LIPPE LISTE LITER LITZE LOBBY LOBEN LOCKE LOGIK LOHNE LOKAL LOSEN LOTSE LUMPE LUNGE LUPEN LURCH LUXUS LÄDEN LÄNGE LÖHNE LÖSEN LÖWEN LÜCKE LÜFTE LÜGEN MACHE MACHT MAGEN MAGER MAGIE MAHNE MAJOR MAKRO MALEN MALER MALVE MAMBA MANCH MANGO MANIE MANKO MAPPE MARKE MARKT MASKE MASSE MATTE MAUEN MAUER MEERE MEHRE MEIDE MEILE MEINE MEISE MEIST MELDE MENGE MENSA MENÜS MESSE METER METRO MIESE MIETE MIKRO MILCH MILDE MIMIK MINUS MINZE MITTE MOBIL MODAL MODEL MODEM MODEN MODUS MOLKE MONAT MOORE MOPED MORAL MORSE MOTIV MOTOR MOTTE MOTTO MULDE MUMIE MUSIK MUTIG MYRTE MÄDEL MÄUSE MÖBEL MÖGEN MÖHRE MÜCKE MÜDER MÜHLE MÜNZE MÜSSE NABEL NACHT NADEL NAGEL NAHEN NAMEN NARBE NASEN NATUR NEBEL NEBEN NEFFE NEHME NEIGE NENNE NERZE NETTE NETTO NETZE NEUEN NEUES NICHT NIERE NIETE NIMMT NOBEL NOBLE NOTAR NOTEN NÄGEL NÄHEN NÖTIG NÜSSE NÜTZT OASEN OBERE OBERN OBHUT OBIGE OCHSE OCKER OHREN OLIVE OMEGA ONKEL OPERN OPFER OPTIK ORBIT ORDEN ORGEL ORKAN ORTEN OSTEN OTTER OVALE OZEAN PAARE PACKE PAKET PALME PANDA PANIK PANNE PAPPE PAPST PARAT PARKE PARTY PASTA PASTE PATEN PAUKE PAUSE PEDAL PEGEL PELZE PENNE PERDU PERLE PESTO PETZE PFAHL PFAND PFEIL PFERD PFIFF PFLUG PFOTE PFUND PHASE PIANO PILOT PILZE PINIE PINTE PISTE PIXEL PIZZA PLAGE PLANE PLATT PLATZ PLÄNE POKAL POKER POLAR POLEN POREN POSEN PRALL PREIS PRIMA PRINZ PRISE PROBE PROFI PROST PRUNK PRÜDE PRÜFT PUDER PULLE PUMPE PUNKT PUPPE PUTEN PÜREE QUALM QUARK QUASI QUECK QUELL QUERE QUIRL QUOTE RABEN RACHE RADAR RADIO RADON RAMPE RASCH RASEN RASSE RATEN RAUCH RAUPE RAUTE REBEL REBEN RECHT REDEN REGAL REGEL REGEN REGIE REICH REIFE REIHE REIME REISE REIZE REMIS RENTE RESTE REVUE RIESE RINDE RINGE RINNE RIPPE RITZE ROBBE ROLLE ROMAN ROSEN ROTOR ROUTE RUDER RUFEN RUHIG RUINE RUMBA RUNDE RÄDER RÄUME RÖHRE RÖMER RÜBEN SACHE SAGEN SAHNE SAITE SALAT SALBE SALDO SALON SALSA SALTO SALZE SAMBA SAMEN SANFT SARGE SATIN SATTE SAUCE SAUER SAUNA SCHAF SCHAL SCHAM SCHAR SCHAU SCHEU SCHON SCHUH SCHÖN SECHS SEELE SEGEL SEGEN SEHEN SEHNE SEIDE SEIFE SEILE SEITE SEKTE SENAT SENKE SERIE SERUM SESAM SICHT SIEBE SIEGE SIEHT SILBE SILOS SINNE SITTE SKALA SKIFF SLANG SOCKE SOFAS SOGAR SOHLE SOLAR SOLID SOMIT SONDE SONNE SORGE SORTE SOSSEN SPALT SPANN SPASSE SPATZ SPECK SPEER SPIEL SPION SPITZ SPORN SPORT SPOTT SPRAY SPRIT SPULE SPÜLE STAAT STADT STAHL STALL STAMM STAND STANK STARK STARR START STAUB STEAK STEGE STEIG STEIL STEIN STERN STICH STIEL STIER STIFT STILL STIRN STOCK STOFF STOLZ STORM STREU STROM STUBE STUFE STUHL STUMM STURM STURZ STÄBE STÖẞE STÜCK SUCHE SUCHT SUMME SUPER SUPPE SZENE SÄGEN SÄHEN SÄTZE SÄURE SÖHNE SÜDEN SÜHNE SÜLZE SÜßER SÜßES TABAK TADEL TAFEL TAGES TAKTE TALER TALON TANGO TANKE TANNE TANTE TANZE TAPIR TARIF TASSE TASTE TAUBE TAUEN TAUFE TEAMS TEICH TEILE TEINT TEMPO TENNE TENOR TERME TERRA TESTE TEUER TEXTE THEKE THEMA THESE TIEFE TIERE TIGER TILDE TINTE TIPPE TIPPS TISCH TITAN TITEL TOAST TOBEN TODES TONAL TONNE TOPAS TORTE TORUS TOSEN TOTAL TOTEN TRAKT TRAUM TREFF TREIB TREND TREUE TRICK TRIEB TRINK TROPF TROST TRUHE TRUNK TRÖTE TRÜBE TUBEN TULPE TUMOR TUNER TURBO TYPEN TÄLER TÄNZE TÄTER TÖNEN TÖPFE TÜREN TÜRME UHREN ULKIG ULTRA UMBAU UMWEG UMZUG UNART UNFUG UNKEN UNMUT UNTAT UNTEN UNTER URALT URBAN URIGE VATER VEGAN VERSE VERSO VIDEO VIELE VILLA VINYL VIRUS VISUM VITAL VOGEL VOKAL VORAB VORAN VORNE VOTUM VÄTER VÖGEL WAAGE WACHE WACHS WAFFE WAGEN WAHRE WALZE WANGE WANNE WARME WARTE WARUM WATTE WEBEN WEBER WEDEL WEGEN WEHEN WEICH WEIDE WEIHE WEILE WEISE WEITE WEIẞE WELKE WELLE WELPE WENDE WENIG WERFT WERKE WERTE WESEN WESTE WETTE WICHT WIEGE WIESE WIESO WILLE WINDE WIRTE WITWE WITZE WOCHE WOHIN WOLKE WOLLE WORTE WUCHT WULST WUNDE WURDE WURST WÄNDE WÄRME WÖLFE WÜRDE WÜRZE WÜSTE ZACKE ZANGE ZARTE ZAUNE ZEBRA ZEHEN ZEIGE ZEILE ZELLE ZELTE ZENIT ZEUGE ZIEGE ZIELE ZINNE ZIRKA ZITAT ZITZE ZIVIL ZONEN ZOTEN ZUCHT ZUNGE ZURUF ZWANG ZWECK ZWEIG ZWERG ZWIRN ZWÖLF ZÄHNE ZÖGER ZÜGEL ZÜNDE ÄLTER ÄPFEL ÄRZTE ÖFTER ÜBUNG`;
+const SOL6=`ABFALL ABFLUG ABGABE ABGANG ABGUSS ABHANG ABITUR ABLAUF ABRISS ABSAGE ABSATZ ABSURD ABTEIL ABWEHR ACHSEL ACHTEN ACHTET ADLIGE ADRETT ADVENT AFFÄRE AGENDA AHNUNG AKKORD AKTIEN AKTION AKTIVE ALARME ALBERN ALLEEN ALLEIN ALLTAG ALPAKA ALTBAU AMBOSS AMEISE ANDERE ANFANG ANGABE ANGELN ANGLER ANHALT ANHANG ANKERN ANLAGE ANLAUF ANREDE ANREIZ ANSAGE ANSATZ ANTEIL ANTRAG ANWALT ANZAHL ARBEIT ARCHIV AREALE ARKTIS ARMADA AROMEN ARTIGE ARTIST ASPEKT ATHLET ATOMAR ATTEST AUFBAU AUFRUF AUFZUG AUGUST AUSBAU AUSWEG BACKEN BAGGER BALKEN BALKON BALLON BAMBUS BANANE BANGEN BANKEN BANNER BARBAR BAROCK BASALT BAUERN BAUTEN BEAMTE BECHER BECKEN BEDARF BEEREN BEETEN BEFALL BEFEHL BEFUND BEGINN BEHANG BEIDEN BEIGEN BEITEL BEIẞEN BENZIN BEQUEM BEREIT BERGEN BERUFE BESITZ BESTEN BESUCH BETRAG BETTEN BEUGEN BEULEN BEUTEL BEWEGT BEWEIS BEZIRK BIEDER BIEGEN BIENEN BIKINI BILANZ BILDEN BILDER BILLIG BINDEN BINDER BIRKEN BISHER BISSEN BITTEN BITTER BLASEN BLASSE BLECHE BLEIBT BLENDE BLICKE BLINDE BLITZE BLOCKS BLUMEN BLUMIG BLÄHEN BLÜTEN BODENS BOGENS BOHREN BOLZEN BONBON BOOTEN BRANDS BRATEN BRAUCH BRAUEN BRECHE BREITE BREMSE BRETTE BRIEFE BRILLE BRONZE BRUDER BRUNCH BRUNST BRÜCKE BRÜDER BRÜHEN BUCHEN BUCKEL BUDGET BUNKER BURGEN BURGER BUTTER BÄCKER BÖRSEN BÜCHER BÜGELN BÜRGER CHANCE CHARME CHARTA CHEFIN CHEMIE CHORAL CLOWNS COMICS CREMES DACHSE DACKEL DAMALS DAMPFT DANACH DANKEN DARAUF DARFST DATUMS DAUMEN DEBÜTS DECKEL DECKEN DEFEKT DEHNEN DEICHE DEINEN DELFIN DENKEN DEPOTS DERART DESIGN DETAIL DEUTEN DIALOG DICKER DIENEN DIENST DIESEL DIKTAT DIREKT DISTEL DOKTOR DOLLAR DONNER DOPPEL DRACHE DRAMEN DRECKS DREHEN DRINGT DRITTE DROGEN DROHEN DROHNE DRUCKS DRÜCKE DUCKEN DUELLE DUNKEL DURFTE DUSCHE DÄCHER DÖRFER DÜNNER DÜSTER EBENEN ECHSEN ECHTER ECKIGE EDITOR EFFEKT EICHEL EICHEN EIGENE EIGNEN EILIGE EINIGE EINMAL EINRAD EINSAM EINZEL EINZIG EISERN EISIGE ELENDE ELTERN EMPIRE ENDETE ENDLOS ENGERE ENKELS ERBAUT ERDGAS ERDIGE ERDUNG ERFOLG ERGIBT ERHOLT ERNTEN ERREGT ERSATZ ERSTER ERSTES ERTRAG ESSBAR ETAGEN ETAPPE EXAKTE EXPORT EXTERN FABELN FABRIK FACKEL FADENS FAHREN FAKTEN FAKTOR FALKEN FALLEN FALSCH FALTEN FARBEN FASERN FASSEN FASTEN FAULEN FEDERN FEHLEN FEHLER FEIERN FEILEN FEINER FELDER FELSEN FELSIG FERIEN FERKEL FERNER FERSEN FERTIG FESSEL FESTER FESTES FEUCHT FEUERN FICHTE FIEBER FIELEN FIGURE FILMEN FILTER FINDEN FINGER FIRMEN FISCHE FITTER FLACHE FLACHS FLAGGE FLAMME FLECKE FLIEGE FLIEGT FLIESE FLIEẞT FLOCKE FLUCHT FLÄCHE FLÖSSE FLÖTEN FLÜGEL FLÜSSE FOLGEN FOLGER FOLIEN FORMAT FORMEL FORMEN FORSCH FOSSIL FRACHT FRAGEN FRAUEN FRECHE FREUDE FREUEN FREUND FRIEDE FRISCH FRISUR FROHES FRÜHER FRÜHES FUNKEN FURCHT FUSION FUTTER FÄHIGE FÜHLEN FÜLLEN FÜNFTE GABELN GALGEN GANZES GARTEN GASSEN GAUNER GEBEIN GEBIET GEBISS GEBURT GEBÜHR GEDULD GEFAHR GEFÜHL GEGEND GEGNER GEHALT GEHEGE GEHIRN GEHWEG GEHÖRT GEIGEN GELTEN GEMEIN GEMÜSE GENIAL GERADE GERBEN GERING GERSTE GERUCH GERÄTE GESANG GESETZ GESTEN GESTIK GESUND GETREU GETÖSE GEWALT GEWAND GEWINN GEWÄHR GIEBEL GIPFEL GITTER GLATTE GLAUBE GLEICH GLEISE GLOBUS GLOCKE GLÄSER GLÜHEN GOLDEN GRABEN GRAFIK GRAMME GRANIT GRATIS GRAUEN GRENZE GRILLE GRIMME GROSSER GRUNDE GRUPPE GRÄTEN GRÖßER GRÜNDE GRÜNEN GRÜßEN GUMMIS GURKEN GÖNNEN GÜRTEL HABENS HACKEN HAGELN HALBES HALTEN HALTER HAMMER HANDEL HANGAR HANGEN HARFEN HARTEN HARTES HAUBEN HAUFEN HECKEN HEFTEN HEFTIG HEILEN HEILIG HEIMAT HEITER HEIßEN HEIßER HELDEN HELFEN HELFER HELIUM HELLER HELLES HEMDEN HERAUS HERBST HERDEN HERING HERZEN HERZIG HETZEN HEULEN HIERIN HILFEN HIMMEL HINTER HINWEG HIRSCH HOBELN HOCKEN HOCKEY HOFFEN HOHLES HOLZEN HONIGE HOPFEN HUMMEL HUMMER HUNGER HUSTEN HÄLFTE HÄUSER HÖCKER HÖHLEN HÖRNER HÖRTEN HÜGELN HÜHNER HÜLLEN HÜPFEN HÜRDEN HÜTTEN IDEALE IMBISS IMKERN IMPFEN IMPULS INHALT INNERE INSEKT INSELN IRRTUM JAGDEN JAGUAR JAHREN JAHRES JAMMER JAWOHL JEMAND JETZIG JODLER JOGGEN JUBELN JUGEND JUNGEN JURIST KABELN KAFFEE KAISER KAKTUS KALBEN KALTES KAMERA KAMINE KAMMER KANNTE KANONE KANTEN KANÄLE KAPERN KAPSEL KAPUTT KARREN KARTEN KARTON KASINO KASTEN KATZEN KAUFEN KEGELN KEHLEN KEHREN KEIMEN KELLER KELTEN KENNEN KERBEN KERKER KERZEN KETTEN KEULEN KIEFER KILLER KINDER KIRCHE KIRSCH KISSEN KITTEL KITZEL KLAGEN KLAMME KLASSE KLAUEN KLEBEN KLEINE KLEMME KLINGE KLINIK KLIPPE KLUGES KLÄREN KLÜGER KNABEN KNACKS KNETEN KNIFFE KNOTEN KNÄUEL KOBOLD KOCHEN KOFFER KOHLEN KOLBEN KOMMEN KONTEN KONTER KONTRA KOPIEN KOSTEN KRAGEN KRAKEN KRALLE KRAMEN KRANKE KRATER KRATZE KRAUSE KREDIT KREIDE KREISE KREUZE KRIEGE KRITIK KRONEN KRÄFTE KRÄHEN KRÄNZE KUCHEN KUGELN KULTUR KUMMER KUMPEL KUNDEN KUPFER KÄFIGE KÄMPFE KÄSTEN KÄUFER KÖNIGE KÖNNEN KÖRPER KÜCHEN KÜHLEN KÜRZEN KÜSTEN LABERN LACHEN LACKEN LADUNG LAGERN LAGUNE LAMPEN LANDEN LAPPEN LAPTOP LASSEN LASTER LAUBEN LAUFEN LAUNEN LAUSEN LAUTER LEBEND LEBENS LEEREN LEHREN LEHRER LEICHT LEIDEN LEIHEN LEIMEN LEINEN LEITEN LEITER LENKEN LERNEN LESBAR LESEND LETZTE LEUCHT LEUTEN LIEBEN LIEDER LIEGEN LILIEN LINDEN LINIEN LINKEN LIPPEN LISTEN LOCKEN LOGGEN LOTSEN LUNGEN LUSTIG LÄHMEN LÄNDER LÄNGEN LÄNGER LÄRMEN LÖCHER LÖFFEL LÖSUNG LÜCKEN LÜFTEN MACHEN MADAME MAGIER MAGNET MAHLEN MAHNEN MANCHE MANGEL MANTEL MAPPEN MARINE MARKEN MARMOR MASKEN MASSEN MASSIV MATTEN MAUERN MEDIEN MEERES MEHLEN MEHLIG MEIDEN MEILEN MEINEN MELDEN MELKEN MENGEN MENSCH MERKEN MESSEN MESSER METALL MIETEN MILBEN MILDER MILIEU MINUTE MISCHT MITTAG MITTEL MITTEN MOBBEN MODELL MODERN MONATE MONDEN MONTAG MORGEN MOTIVE MUSEUM MUSKEL MUSTER MUTTER MÄNNER MÄUSEN MÖRDER MÖRTEL MÜCKEN MÜHLEN MÜNDER MÜNDIG MÜNZEN MÜTTER NACKEN NADELN NAGELN NAMENS NARREN NATION NEBELN NEHMEN NEIDEN NEIGEN NENNEN NERVEN NESTER NETZEN NEUBAU NEUERE NICKEN NIEDER NIESEN NIMMER NIMMST NIVEAU NORDEN NORMAL NUMMER NUTZER NÄHERN NÄHMEN NÜTZEN OBACHT OBENAN OBJEKT OCHSEN OFFENE OLIVEN OPTION ORANGE ORDNEN ORGANE ORGELN ORIENT OSTERN OVALEN OZEANE PAKETE PALMEN PANDAS PANZER PAPIER PARFUM PARFÜM PARKEN PARTEI PARTIE PASSEN PASSIV PASTEN PATENT PATRON PAUKEN PAUSEN PEDALE PENDEL PERLEN PERSON PFANNE PFEIFE PFERDE PFLEGE PFLEGT PFORTE PHASEN PHYSIK PILGER PILLEN PINSEL PISTEN PIZZAS PLAGEN PLAKAT PLANEN PLATTE PLEITE PLÄTZE POKALE POKERN POLARE POLLEN PORTAL POSTEN PRAXIS PREISE PRESSE PRIMAT PRIMÄR PROBEN PROFIL PRÄGEN PRÄMIE PRÜFEN PUDERN PULVER PUMPEN PUNKTE PUPPEN PURPUR QUADER QUAKEN QUELLE QUELLT QUEREN QUITTE QUOTEN RABATT RADIOS RAHMEN RAKETE RAMMEN RAMPEN RANGEN RASANT RASEND RAUFEN RAUPEN RAUSCH RAUTEN RECHEN RECHTE REDENS REDNER REFORM REGELN REGENS REGIME REGION REICHE REIFEN REIGEN REIHEN REISEN REITEN REITER REIZEN REIZES REKORD RENNEN RENNER RENTEN RETTEN RETTER REUIGE REVIER REZEPT RIEGEL RIESEN RINDER RINGEN RINGER RIPPEN RISIKO RITTER ROBBEN RODUNG ROLLEN ROLLER ROMANE ROSTEN RUBRIK RUDERN RUFEND RUHEND RUNDEN RUPFEN RÄDERN RÄTSEL RÄUMEN RÖHREN RÜCKEN RÜHMEN RÜHREN RÜSTEN SACHEN SAFTIG SAISON SALAMI SALATE SALBEN SALDEN SALONS SALZEN SAMMEL SANFTE SATTEL SAUBER SAUCEN SAUGEN SCHACH SCHALE SCHALL SCHATZ SCHEIN SCHEMA SCHERE SCHIEF SCHIFF SCHILD SCHIRM SCHLAF SCHLAU SCHMAL SCHNEE SCHROT SCHUHE SCHULD SCHULE SCHUSS SCHUTZ SCHWUR SCHÖNE SEGELN SEHEND SEIDEN SEIFEN SEILEN SEITEN SELBER SELTEN SENDEN SENDER SENKEN SERIEN SESSEL SETZEN SICHEL SICHER SIEBEN SIEGER SIGNAL SILBER SINGEN SINKEN SINNEN SITTEN SKIZZE SOCKEN SOHLEN SOLIDE SOLLEN SOMMER SONDER SONNEN SORGEN SORTEN SPAREN SPATEN SPEISE SPERRE SPIELE SPINAT SPITZE SPRUNG SPUREN SPÜLEN STANGE STATUE STATUS STEHEN STEINE STELLE STERNE STETIG STEUER STIEGE STIFTE STIMME STOFFE STOLZE STRAFE STRAHL STRAND STRASSE STRAßE STREIT STRESS STRICH STUDIE STUDIO STUFEN STUNDE STÄDTE STÄRKE STÜCKE STÜHLE SUCHEN SUMMEN SUPPEN SYMBOL SYSTEM SZENEN SÄNGER SÄUGER SÄULEN TAFELN TALENT TANKEN TANZEN TASCHE TASSEN TASTEN TAUBEN TAUSCH TEICHE TEILEN TEMPEL TENNIS TERMIN TERROR TESTEN TEUFEL THEKEN THEMEN TICKEN TICKET TIEFER TIGERN TILGEN TINTEN TONNEN TRABEN TRAGEN TRAUBE TRAUER TREPPE TRIEBE TRUPPE TRÄGER TRÄNEN TRÄUME TRÖDEL TULPEN TUNNEL TÜPFEL TÜRMEN UMFANG UMFELD UMGANG UMHANG UMKEHR UMLAGE UMRISS UMSATZ UMWEGE UNFALL UNRUHE UNSERE UNSINN URLAUB URTEIL VAKUUM VERBAL VERBEN VERBOT VEREIN VERLAG VERZUG VIELEN VIERTE VISIER VISION VOLLER VORHER VORHIN VORRAT VULKAN WACHEN WAFFEN WAHREN WALZEN WALZER WANDEL WANGEN WARTEN WASSER WECKER WEICHE WEIDEN WEIHEN WEILER WEINEN WEISEN WEITER WELTEN WENDEN WERBEN WERDEN WERFEN WERFER WERKEN WERTEN WETTEN WETTER WIEGEN WIESEN WILDER WILDES WILLEN WINDEN WINKEN WINTER WIRBEL WIRKEN WISCHT WISSEN WITWEN WITZIG WOCHEN WOLKEN WOLLEN WUCHER WUNDER WUNSCH WURDEN WURZEL WÄHLEN WÄHLER WÜRFEL WÜRZEN ZAHLEN ZANGEN ZAPFEN ZAUBER ZECHEN ZEIGEN ZEILEN ZEITEN ZELLEN ZERREN ZIEGEL ZIEHEN ZIELEN ZIFFER ZIMMER ZINKEN ZINSEN ZIRKEL ZITATE ZORNIG ZUCKER ZUGABE ZUGANG ZUNGEN ZURÜCK ZWINGE ZWIRNE ZÄHLEN ZÜGELN ÖFFNEN`;
+const upper=s=>s.replace(/ß/g,'ẞ').toUpperCase();
+const cleanWords=(s,n)=> [...new Set(upper(s).split(/[\s,;]+/).filter(w=>new RegExp('^[A-ZÄÖÜẞ]{'+n+'}$').test(w)))];
+const base={5:cleanWords(SOL5,5),6:cleanWords(SOL6,6)};
+// Zugelassene zusätzliche Eingaben, die nicht als Tageslösung ausgewählt werden.
+const GUESS5=`ABHOB ABHUB ABKAM ANBOT ANHOB ANKAM BANDS BEGAB BESTE BLOẞE CLUBS COVER DENKE DONAU ECHTE ERHOB ERLAG ERZOG EVENT FINDE FÄLLT FÜHRT FÜẞEN GEBAR HOFFE KENNE KLARE KOMME KOMMT KÄSEN LEIBS LEVEL LIEGT LÄUFT MAILS MALZE MAẞEN PORTO REINE SCHOẞ STEHT TOLLE VENUS WIRRE ZEIGT`;
+const GUESS6=`ABHEBE ANDERS ARGONS BERLIN BESSER BRINGT CENTER DAMPFS DESSEN DIESEM DIESEN DIESER DIESES DRAHTS DÜRFEN EILEND EISSEE ERSTEN FINDET GANZEN GESAGT GROẞEN GROẞER GROẞES GRÖẞTE HATTEN HEIẞES HÄTTEN INDIEN JEDOCH KANNST KEINEN KEINER KNARRE KONNTE KÖNNTE LEIDER LIEBER MEINEM MEINER MUSSTE MÄDELS MÖCHTE MÜSSEN NICHTS OBWOHL ONLINE PAMPEN PECHIG PRIVAT PROFIS QUARKE SCHWER SEINEM SEINEN SEINER SELBST SOFORT SOLCHE SOLLTE SPÄTER STELLT STIMMT UPDATE VIDEOS VÖLLIG WEIẞEN WEIẞER WELCHE WIEDER WOLLTE WORDEN WÜRDEN`;
+const baseGuesses={5:[...new Set([...base[5],...cleanWords(GUESS5,5)])],6:[...new Set([...base[6],...cleanWords(GUESS6,6)])]};
+const KEY='wortkompass-v1';
+function readStore(){try{return JSON.parse(localStorage.getItem(KEY))||{}}catch{return {}}}
+let store=readStore();store.stats ||= {};store.added ||= {answers:[],guesses:[]};store.games ||= {};store.sequence ||= 0;store.profile ||= {name:''};
+const el=id=>document.getElementById(id);const today=()=>{let d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
+let n=[5,6].includes(Number(store.settings?.length))?Number(store.settings.length):5,mode=store.settings?.mode==='free'?'free':'daily',difficulty=['leicht','mittel'].includes(store.settings?.difficulty)?store.settings.difficulty:'mittel',game=null,input='',message='';
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(store))}catch{message='Speicher nicht verfügbar (privater Browsermodus?).'}};
+const answers=()=>[...new Set([...base[n],...store.added.answers.filter(w=>w.length===n)])];
+const guesses=()=>new Set([...baseGuesses[n],...store.added.guesses.filter(w=>w.length===n),...store.added.answers.filter(w=>w.length===n)]);
+function hash(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
+function getKey(){const suffix=n===6&&difficulty!=='mittel'?`-${difficulty}`:'';return mode==='daily'?`daily-${today()}-${n}${suffix}`:`free-${n}${suffix}`}
+function limit(){return n===5?6:({leicht:7,mittel:6}[difficulty]||6)}
+function ensureLimit(g){if(!g.maxAttempts)g.maxAttempts=g.n===5?6:(g.key.endsWith('-leicht')?7:6);return g}
+function start(force=false){const k=getKey();if(mode==='daily'&&store.games[k]){game=ensureLimit(store.games[k]);input='';render();return}if(mode==='daily'){const a=base[n],index=hash(`${today()}-${n}-wortkompass-v3`) % a.length;game={answer:a[index],rows:[],ended:false,win:false,mode,n,day:today(),key:k,maxAttempts:limit()};store.games[k]=game}else{if(!force&&store.games[k]&&!store.games[k].ended){game=ensureLimit(store.games[k])}else{const a=answers(),prev=store.games[k]?.answer;let choice=a[Math.floor(Math.random()*a.length)];if(a.length>1&&choice===prev)choice=a[(a.indexOf(choice)+1)%a.length];game={answer:choice,rows:[],ended:false,win:false,mode,n,key:k,maxAttempts:limit()};store.games[k]=game;store.sequence++}}input='';save();render()}
+function evaluate(guess,answer){const res=Array(n).fill('gray'),left={};for(let i=0;i<n;i++){if(guess[i]===answer[i])res[i]='green';else left[answer[i]]=(left[answer[i]]||0)+1}for(let i=0;i<n;i++)if(res[i]!=='green'&&left[guess[i]]>0){res[i]='yellow';left[guess[i]]--}return res}
+function stats(){const key=n===5?'5':difficulty==='mittel'?'6':`6-${difficulty}`;const s=store.stats[key] ||= {played:0,wins:0,total:0,streak:0,best:0,distribution:Array(limit()).fill(0),lastDaily:null};while(s.distribution.length<limit())s.distribution.push(0);return s}
+function submit(){if(game.ended)return;if(input.length!==n){message=`Bitte genau ${n} Buchstaben eingeben.`;render();return}const word=input;if(!guesses().has(word)){message='Dieses Wort steht noch nicht in unserer Wortliste. Bitte ein anderes Wort versuchen.';render();return}
+let colors=evaluate(word,game.answer);game.rows.push({word,colors});input='';message='';if(word===game.answer){game.ended=true;game.win=true;finish(true)}else if(game.rows.length>=game.maxAttempts){game.ended=true;game.win=false;finish(false)}save();render()}
+function finish(win){const s=stats();s.played++;if(win){s.wins++;s.total+=game.rows.length;s.distribution[game.rows.length-1]++;s.streak++;s.best=Math.max(s.best,s.streak)}else s.streak=0}
+function insert(k){if(k==='ENTER'){submit();return}if(k==='⌫'){input=input.slice(0,-1);message='';render();return}if(game.ended||input.length>=n)return;if(/^[A-ZÄÖÜẞ]$/.test(k)){input+=k;message='';render()}}
+function render(){el('length').value=String(n);el('mode').value=mode;el('difficulty').value=difficulty;el('difficultyWrap').style.display=n===6?'':'none';const board=el('board');board.innerHTML='';for(let r=0;r<game.maxAttempts;r++){let row=document.createElement('div');row.className='line';row.style.gridTemplateColumns=`repeat(${n},minmax(0,1fr))`;let played=game.rows[r],word=played?.word||(r===game.rows.length&&!game.ended?input:'');for(let i=0;i<n;i++){let t=document.createElement('div');t.className='tile'+(word[i]?' filled':'')+(played?' '+played.colors[i]:'');t.textContent=word[i]||'';row.appendChild(t)}board.appendChild(row)}const rank={gray:1,yellow:2,green:3},used={};for(const r of game.rows){[...r.word].forEach((ch,i)=>{const color=r.colors[i];if((rank[color]||0)>(rank[used[ch]]||0))used[ch]=color})}const kb=el('keyboard');kb.innerHTML='';for(const letters of ['QWERTZUIOPÜ','ASDFGHJKLÖÄẞ','⇧YXCVBNM⌫']){let row=document.createElement('div');row.className='keyrow';for(const k of letters){if(k==='⇧')continue;const b=document.createElement('button');b.className='key'+(used[k]?' '+used[k]:'')+(k==='⌫'?' special':'');b.textContent=k;b.setAttribute('aria-label',k==='⌫'?'Löschen':k);b.addEventListener('click',()=>insert(k));row.appendChild(b)}if(letters.startsWith('⇧')){const b=document.createElement('button');b.className='key special primary';b.textContent='ENTER';b.addEventListener('click',()=>insert('ENTER'));row.appendChild(b)}kb.appendChild(row)}el('status').textContent=message||(game.ended?(game.win?`Richtig! ${game.answer} in ${game.rows.length} Versuch${game.rows.length===1?'':'en'} gelöst.`:`Leider verloren. Gesucht war: ${game.answer}.`):(mode==='daily'?`Tagesrätsel vom ${today().split('-').reverse().join('.')}`:'Freies Spiel')+` · Versuch ${game.rows.length+1} von ${game.maxAttempts}`);el('newGame').textContent=mode==='daily'?'Tagesrätsel anzeigen':'Neues Spiel';el('statLength').textContent=`· ${n} Buchstaben${n===6?" · "+difficulty:""}`;const s=stats();el('played').textContent=s.played;el('wins').textContent=s.wins;el('rate').textContent=s.played?Math.round(100*s.wins/s.played)+' %':'0 %';el('average').textContent=s.wins?(s.total/s.wins).toLocaleString('de-DE',{maximumFractionDigits:2}):'–';el('streak').textContent=s.streak;el('best').textContent=s.best;let max=Math.max(1,...s.distribution);el('bars').innerHTML='';s.distribution.forEach((v,i)=>{let r=document.createElement('div');r.className='barrow';r.innerHTML=`<span style="width:8px">${i+1}</span><div class="bar" style="width:${Math.max(2,v/max*100)}%">${v||''}</div>`;el('bars').appendChild(r)})}
+function download(name,content,type='text/plain'){const url=URL.createObjectURL(new Blob([content],{type}));const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),500)}
+el('playerName').value=store.profile.name||'';
+el('saveProfile').addEventListener('click',()=>{store.profile.name=el('playerName').value.trim().slice(0,24);save();el('profileStatus').textContent='Gespeichert auf diesem Gerät';});
+el('length').addEventListener('change',e=>{n=Number(e.target.value);store.settings={length:n,mode,difficulty};save();message='';start()});el('difficulty').addEventListener('change',e=>{difficulty=e.target.value;store.settings={length:n,mode,difficulty};save();message='';start()});el('mode').addEventListener('change',e=>{mode=e.target.value;store.settings={length:n,mode,difficulty};save();message='';start()});el('newGame').addEventListener('click',()=>{if(mode==='daily'){message='Für heute gibt es ein Tagesrätsel je Wortlänge und Schwierigkeitsstufe.';render()}else start(true)});el('infoButton').addEventListener('click',()=>{el('help').open=true;el('help').scrollIntoView({behavior:'smooth'})});
+el('importWords').addEventListener('click',()=>{const words=[...new Set(upper(el('wordInput').value).split(/[\s,;]+/).filter(x=>/^[A-ZÄÖÜẞ]{5,6}$/.test(x)))];const kind=el('wordKind').value;const before=store.added[kind].length;store.added[kind]=[...new Set([...store.added[kind],...words])];save();el('importStatus').textContent=`${store.added[kind].length-before} Wörter hinzugefügt; ${words.length} gültige Wörter aus dem Text erkannt. Neue Lösungen gelten für neue Spiele. Importierte Wörter bleiben auf diesem Gerät gespeichert.`;el('wordInput').value=''});
+el('exportWords').addEventListener('click',()=>{
+  const rows=[['Wort','Buchstaben','Kategorie','Herkunft']];
+  for(const len of [5,6]){
+    const builtin=new Set(base[len]);
+    for(const word of [...builtin].sort((a,b)=>a.localeCompare(b,'de')))rows.push([word,len,'Lösungswort','Eingebaut']);
+    for(const word of store.added.answers.filter(w=>w.length===len&&!builtin.has(w)).sort((a,b)=>a.localeCompare(b,'de')))rows.push([word,len,'Lösungswort','Eigene Ergänzung']);
+    const known=new Set([...builtin,...store.added.answers]);
+    for(const word of baseGuesses[len].filter(w=>!known.has(w)).sort((a,b)=>a.localeCompare(b,'de'))){
+      rows.push([word,len,'Nur Ratewort','Geprüfte Übernahme / bereinigt']);known.add(word);
+    }
+    for(const word of store.added.guesses.filter(w=>w.length===len&&!known.has(w)).sort((a,b)=>a.localeCompare(b,'de')))rows.push([word,len,'Nur Ratewort','Eigene Ergänzung']);
+  }
+  const csv='\uFEFF'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\r\n');
+  download('WortKompass-Wortliste-komplett.csv',csv,'text/csv;charset=utf-8');
+});
+el('exportStats').addEventListener('click',()=>{const rows=[['Buchstaben','Schwierigkeit','Gespielt','Gewonnen','Gewinnquote','Ø Versuche','Serie','Beste Serie','Gewinn 1','Gewinn 2','Gewinn 3','Gewinn 4','Gewinn 5','Gewinn 6','Gewinn 7']];for(const [key,len,level] of [['5',5,'Standard'],['6-leicht',6,'Leicht'],['6',6,'Mittel'],['6-schwer',6,'Schwer (historisch)']]){const s=store.stats[key]||{played:0,wins:0,total:0,streak:0,best:0,distribution:[]};rows.push([len,level,s.played,s.wins,s.played?(100*s.wins/s.played).toFixed(2).replace('.',',')+' %':'0 %',s.wins?(s.total/s.wins).toFixed(2).replace('.',','):'',s.streak,s.best,...Array.from({length:7},(_,i)=>s.distribution[i]||0)])}download('WortKompass-Statistik.csv','\uFEFF'+rows.map(r=>r.join(';')).join('\r\n'),'text/csv;charset=utf-8')});
+el('resetStats').addEventListener('click',()=>{if(confirm('Statistik für 5 und 6 Buchstaben unwiderruflich zurücksetzen?')){store.stats={};save();render()}});
+el('share').addEventListener('click',async()=>{if(!game.ended){message='Das Ergebnis kann nach Spielende geteilt werden.';render();return}const icons={green:'🟩',yellow:'🟨',gray:'⬛'};const text=`${store.profile.name?store.profile.name+' · ':''}WortKompass ${n} · ${game.mode==='daily'?game.day:'Freies Spiel'} · ${game.win?game.rows.length:'/'} /${game.maxAttempts}\n`+game.rows.map(r=>r.colors.map(c=>icons[c]).join('')).join('\n')+(location.protocol.startsWith('http')?'\n'+location.origin+location.pathname:'');try{if(navigator.share){await navigator.share({title:'WortKompass-Ergebnis',text});message='Ergebnis geteilt.';}else{await navigator.clipboard.writeText(text);message='Ergebnis in die Zwischenablage kopiert.';}}catch{window.prompt('Ergebnis kopieren:',text);message='Ergebnis zum manuellen Kopieren angezeigt.'}render()});
+el('shareLink').addEventListener('click',async()=>{if(!location.protocol.startsWith('http')){message='Ein öffentlicher Link entsteht erst nach dem Hochladen auf einen Webhoster. Bis dahin können Sie die HTML-Datei versenden.';render();return}const url=location.origin+location.pathname;try{if(navigator.share){await navigator.share({title:'WortKompass',text:'Spiel mit bei WortKompass!',url});return}await navigator.clipboard.writeText(url);message='Spiel-Link kopiert.'}catch(e){if(e.name==='AbortError')return;window.prompt('Spiel-Link kopieren:',url);message='Spiel-Link angezeigt.'}render()});
+window.addEventListener('keydown',e=>{if(e.altKey||e.ctrlKey||e.metaKey)return;if(['TEXTAREA','INPUT','SELECT'].includes(document.activeElement?.tagName))return;const k=upper(e.key);if(k==='ENTER'){e.preventDefault();insert('ENTER')}else if(k==='BACKSPACE'){e.preventDefault();insert('⌫')}else if(/^[A-ZÄÖÜẞ]$/.test(k)){e.preventDefault();insert(k)}});
+start();
+</script></main></body></html>
